@@ -1,0 +1,67 @@
+esphome:
+  name: smart-power-meter
+  friendly_name: smart-power-meter
+
+esp8266:
+  board: esp01_1m
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "+iqPbK6P1v9i7YEoOYd9xxxxxxxxxx"
+
+ota:
+  platform: esphome
+  password: "Xxxxxxxxxxxxx"
+
+wifi:
+  ssid: "Firstxxxxxxx"
+  password: "9xxxxxxxx"
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Power-Meter Fallback Hotspot"
+    password: "9xxxxxxxx"
+
+web_server:
+  port: 80
+
+captive_portal:
+
+sensor:
+  - platform: ct_clamp
+    sensor: adc_sensor
+    name: "GF Measured Current"
+    update_interval: 1s
+    id: measured_current
+    filters:
+      - calibrate_linear:
+          # Measured value of 0 maps to 0A
+          - 0.0 -> 0.0
+          # Known load: 5.0A - change this!
+          # Value shown in logs: 0.01229A - change this!
+          - 0.019 -> 7.23
+
+  # Example source sensor
+  - platform: adc
+    pin: A0
+    id: adc_sensor
+    
+  - platform: total_daily_energy
+    name: "GF Total Daily Power"
+    power_id: my_power
+
+  - platform: template
+    id: my_power
+    name: "GF Measured Power"
+    lambda: return id(measured_current).state * 238.0 / 1000; # Power = Current * Voltage (change 238 to your mains voltage)
+    unit_of_measurement: 'kW'
+    update_interval: 2s
+
+
+time:
+  - platform: sntp
+    id: my_time
