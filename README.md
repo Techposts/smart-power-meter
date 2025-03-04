@@ -2,7 +2,7 @@
 
 An IoT-based system to monitor energy usage in real-time using ESP8266/ESP32 and SCT013 current sensors integrated with Home Assistant.
 
-![Smart Energy Monitoring System](https://raw.githubusercontent.com/yourusername/smart-energy-monitoring/main/images/system-overview.jpg)
+![Smart Energy Monitoring System](https://raw.githubusercontent.com/Techposts/smart-power-meter/refs/heads/main/DIY-Energy-Monitoring-Device-home-Assistant.png)
 
 ## 📊 Overview
 
