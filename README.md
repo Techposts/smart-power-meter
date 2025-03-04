@@ -13,6 +13,8 @@ This project allows you to build a smart electricity meter from scratch that:
 - Helps conserve energy and prevent wastage
 - Integrates with Home Assistant for smart home automation
 
+![Home Assistant card](https://raw.githubusercontent.com/Techposts/smart-power-meter/refs/heads/main/Home-Assistant-Card.png)
+
 ## 🛠️ Hardware Requirements
 
 | Component | Details |
