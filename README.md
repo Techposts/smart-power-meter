@@ -53,7 +53,7 @@ Install Home Assistant on a Raspberry Pi or other supported device. Follow the [
 ### Step 4: Hardware Assembly
 Connect the SCT013 sensor to your ESP8266/ESP32 following the circuit diagram:
 
-![Circuit Diagram](https://raw.githubusercontent.com/yourusername/smart-energy-monitoring/main/images/circuit-diagram.jpg)
+![Circuit Diagram](https://github.com/Techposts/smart-power-meter/blob/main/Circuit-Diagram.png)
 
 ### Step 5: Sensor Calibration
 1. Clamp the SCT013 sensor on the phase wire (usually red) from your electricity meter
