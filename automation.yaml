@@ -1,0 +1,176 @@
+alias: Enhanced High Power Usage Monitoring
+description: >-
+  Smart power monitoring that provides graduated alerts based on power usage
+  levels and duration
+triggers:
+  - entity_id: sensor.gf_power_meter_gf_measured_power
+    id: warning_level
+    above: 3.1
+    for:
+      seconds: 30
+    trigger: numeric_state
+  - entity_id: sensor.gf_power_meter_gf_measured_power
+    id: critical_level
+    above: 3.8
+    for:
+      seconds: 15
+    trigger: numeric_state
+  - entity_id: sensor.gf_power_meter_gf_measured_power
+    id: extended_warning
+    above: 3.1
+    for:
+      minutes: 5
+    trigger: numeric_state
+conditions:
+  - condition: time
+    after: "07:00:00"
+    before: "22:00:00"
+  - condition: template
+    value_template: >-
+      {% set last_alert = states('input_datetime.last_power_alert') %}   {% if
+      last_alert != 'unavailable' and last_alert != 'unknown' %}
+        {% set time_diff = (as_timestamp(now()) - as_timestamp(last_alert)) / 60 %}
+        {{ time_diff > 10 }}
+      {% else %}
+        true
+      {% endif %}
+  - condition: template
+    value_template: "{{ power_level > 0 }}"
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: critical_level
+        sequence:
+          - data:
+              title: ⚠️ CRITICAL POWER OVERLOAD
+              message: >-
+                Critical overload detected! Please reduce load to avoid risk.
+                Current usage: {{ power_level }} kW.
+            action: persistent_notification.create
+          - data:
+              title: ⚠️ CRITICAL POWER OVERLOAD
+              message: >-
+                Urgent! Current usage: {{ power_level }} kW. Please turn off {{
+                appliance_guess }} immediately to prevent damage.
+              data:
+                push:
+                  sound:
+                    name: default
+                    critical: 1
+                    volume: 1
+                  interruption-level: critical
+            action: notify.mobile_app_ravis_iphone
+          - data:
+              target:
+                - media_player.name
+                - media_player.name
+                - media_player.name
+              message: >-
+                Alert! Critical power overload at {{ power_level }} kilowatts!
+                Please turn off {{ appliance_guess }} immediately.  मीटर गंभीर
+                ओवरलोड - तुरंत {{ appliance_guess }} बंद करें!
+              data:
+                type: tts
+                method: all
+            action: notify.alexa_media
+      - conditions:
+          - condition: trigger
+            id: extended_warning
+        sequence:
+          - data:
+              title: ⚠️ EXTENDED HIGH POWER USAGE
+              message: >-
+                Your power usage has remained high for 5 minutes at {{
+                power_level }} kW. Consider turning off unnecessary appliances.
+            action: persistent_notification.create
+          - data:
+              title: ⚠️ Extended High Power Usage
+              message: >-
+                Continuous high power usage detected for over 5 minutes.
+                Consider turning off {{ appliance_guess }}.
+              data:
+                push:
+                  sound:
+                    name: default
+                  interruption-level: time-sensitive
+            action: notify.mobile_app_ravis_iphone
+          - data:
+              target:
+                - media_player.name
+                - media_player.name
+                - media_player.name
+              message: >-
+                Warning! High power usage sustained for over 5 minutes at {{
+                power_level }} kilowatts. Please turn off unnecessary devices.
+                बिजली की खपत कम करने के लिए, कृपया कुछ उपकरण बंद करें।
+              data:
+                type: tts
+                method: all
+            action: notify.alexa_media
+      - conditions:
+          - condition: trigger
+            id: warning_level
+        sequence:
+          - data:
+              title: ⚠️ HIGH POWER USAGE
+              message: >-
+                Warning: Power usage at {{ power_level }} kW. Consider reducing
+                the load.
+            action: persistent_notification.create
+          - data:
+              title: High Power Usage
+              message: >-
+                Current power usage: {{ power_level }} kW. Reduce unnecessary
+                load.
+              data:
+                push:
+                  sound:
+                    name: default
+                  interruption-level: passive
+            action: notify.mobile_app_ravis_iphone
+          - data:
+              target:
+                - media_player.name
+                - media_player.name
+                - media_player.name
+              message: >-
+                मीटर ओवरलोड - कृपया लोड कम करने के लिए उपकरण बंद कर दें।  Meter
+                Overload - Please switch off {{ appliance_guess }} to reduce the
+                load. Current power: {{ power_level }} kilowatts.
+              data:
+                type: tts
+                method: all
+            action: notify.alexa_media
+  - data:
+      entity_id: input_datetime.last_power_alert
+      datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+    action: input_datetime.set_datetime
+  - data:
+      entity_id: input_number.last_power_level
+      value: "{{ power_level }}"
+    action: input_number.set_value
+variables:
+  power_level: >-
+    {% set power1 = states('sensor.gf_power_meter_gf_measured_power') | float(0)
+    %} {% set power2 = states('sensor.measured_power') | float(0) %} {% if
+    power1 > power2 %}{{ power1 }}{% else %}{{ power2 }}{% endif %}
+  appliance_guess: |-
+    {% set power = power_level | float %} {% if power > 4.5 %}
+      multiple heavy appliances
+    {% elif power > 3.8 %}
+      an air conditioner or water heater
+    {% elif power > 3.1 %}
+      a heavy appliance like a microwave, iron, or water pump
+    {% else %}
+      some appliances
+    {% endif %}
+  message_severity: |-
+    {% if trigger.id == 'critical_level' %}
+      CRITICAL POWER OVERLOAD
+    {% elif trigger.id == 'extended_warning' %}
+      Extended High Power Usage
+    {% else %}
+      High Power Usage
+    {% endif %}
+mode: single
